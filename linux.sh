@@ -1,8 +1,29 @@
 #!/bin/bash
+function Banner(){
+echo "
+
+___________                                                                
+\_   _____/ _____   ___________  ____   ____   ____   ____ ___.__.         
+ |    __)_ /     \_/ __ \_  __ \/ ___\_/ __ \ /    \_/ ___<   |  |  ______ 
+ |        \  Y Y  \  ___/|  | \/ /_/  >  ___/|   |  \  \___\___  | /_____/ 
+/_______  /__|_|  /\___  >__|  \___  / \___  >___|  /\___  > ____|         
+        \/      \/     \/     /_____/      \/     \/     \/\/              
+.____    .__                     
+|    |   |__| ____  __ _____  ___
+|    |   |  |/    \|  |  \  \/  /
+|    |___|  |   |  \  |  />    < 
+|_______ \__|___|  /____//__/\_ \\
+        \/       \/            \/                                 
+
+"
+}
 function Basic_Info(){
 echo "===============基本信息============"
     echo "主机名:$(hostname)"
     echo "当前用户:$(whoami)"
+    echo "查看当前登录用户"
+    w
+
 
 echo "=================end=============="
 }
@@ -15,7 +36,10 @@ Command_Exist(){
         echo 0
     fi
 }
-
+Evil_Process(){
+    echo "==========占用前三的进程============="
+    ps aux  --sort=-%cpu | head -n 4
+}
 #入侵排查
 Invade_Identify(){
     echo "================入侵检测==============="
@@ -36,9 +60,15 @@ Invade_Identify(){
         grep -e "bash" -e "wget" -e "ssh" /home/$user/.bash_history
     done
 
+    echo "=========建立连接的IP地址========"
 
-    echo "============异常端口============="
-    echo "waitting for develop"
+    info=$(ss -an |grep "tcp\|udp")
+    echo "$info" 
+    ports=$(echo "$info" |awk '{print $5}' |awk -F ':' '{print $2}' |sort |uniq )
+    for port in $ports;do
+        echo "端口$port启动信息"
+        lsof -i :$port
+    done
 
     echo "============异常进程============="
     echo "waitting for develop"
@@ -71,7 +101,34 @@ Invade_Identify(){
 
     
 }
+#后门检查
+BackDoor_Identify(){
+    echo "==========后门检查=========="
+    user_list=$(ls /home)
+    for user in $user_list
+    do  
+        if [[ -e "/home/$user/authorized_keys" ]];then
+            echo "=========ssh公私钥免密登录========"
+            echo "$user用户 authorized_keys"文件存在,修改时间 $(ls -l /home/$user/authorized_keys |awk '{print $6,$7,$8}')
 
+        else
+            :
+        fi
+    done
+    
+    backdoor_of_alias=$(alias|grep "ssh='strace")
+    if [ -n "$backdoor_of_alias" ];then 
+        echo "----------------------------------"
+        echo "发现疑似alias后门 $backdoor_of_alias"
+    else
+        :
+    fi
+
+
+
+
+
+}
 Log_Analysis(){
     Log_Base="/var/log"
     #得到一个日志文件列表
@@ -171,10 +228,13 @@ function webshell(){
 }
 
 main(){
+    Banner
 #    Basic_Info
 #    Invade_Identify
 #    Log_Analysis
 #    webshell
+    # BackDoor_Identify
+    Evil_Process
 }
 
 main
