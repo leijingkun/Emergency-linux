@@ -300,13 +300,13 @@ function webshell_php(){
 }
 
 main(){
-    # Banner
-    # Basic_Info
-    # Invade_Identify
-    # Log_Analysis
+    Banner
+    Basic_Info
+    Invade_Identify
+    Log_Analysis
     webshell_php
-    # BackDoor_Identify
-    # Evil_Process
+    BackDoor_Identify
+    Evil_Process
 }
 
 main
