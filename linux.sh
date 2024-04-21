@@ -269,30 +269,44 @@ function Log_Of_secure(){
 }
 
 
-function webshell(){
-    bprintf "webshell"
-    rules=("eval(" "system(" "3c6e0b8a9c15224a")
+function webshell_php(){
+    bprintf "webshell检测(seay正则)"
+    web_path="/var/www/html"
+    rules=(
+        "\b(system|passthru|pcntl_exec|shell_exec|escapeshellcmd|exec)\s{0,10}\(.{0,40}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "\b(file_get_contents|fopen|readfile|fgets|fread|parse_ini_file|highlight_file|fgetss|show_source)\s{0,5}\(.{0,40}" 
+        "\`\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}\`"
+        "\b(eval|assert)\s{0,10}\(.{0,60}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "\bcall_user_func(_array){0,1}\(\s{0,5}\\\$\w{1,15}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "\b(include|require)(_once){0,1}(\s{1,5}|\s{0,5}\().{0,60}\\\$(?!.*(this->))\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "\bphpinfo\s{0,5}\(\s{0,5}\)"
+        "\b(mb_){0,1}parse_str\s{0,10}\(.{0,40}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "\\\${{0,1}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}\s{0,4}=\s{0,4}.{0,20}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "[\\\"'](HTTP_CLIENT_IP|HTTP_X_FORWARDED_FOR|HTTP_REFERER)[\\\"']"
+        "\\\\b(unlink|copy|fwrite|file_put_contents|bzopen)\\\\s{0,10}\\\\(.{0,40}\\\\$\\\\w{1,20}((\\\\[[\\\"']|\\\\[)\\\\${0,1}[\\\\w\\\\[\\\\]\\\"']{0,30}){0,1}"
+        "\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}\s{0,5}\(\s{0,5}\\\$_(POST|GET|REQUEST|SERVER)\[.{1,20}\]"
+        "select\s{1,4}.{1,60}from.{1,50}\bwhere\s{1,3}.{1,50}=[\"\s\.]{0,10}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "insert\s{1,5}into\s{1,5}.{1,60}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+        "delete\s{1,4}from.{1,20}\bwhere\s{1,3}.{1,30}=[\"\s\.]{0,10}\\\$\w{1,20}((\[[\"']|\[)\\\${0,1}[\w\[\]\"']{0,30}){0,1}"
+    )
     result=""
     length=${#rules[@]}
     # echo $length
     for ((i = 0; i<length;i++));do
-        if ((i==length-1));then
-            result="$result${rules[i]}"
-        else 
-            result="$result${rules[i]}\|"
-        fi
+    # echo ${rules[i]}
+        grep -P -r ${rules[i]} $web_path 2>/dev/null
     done
-    grep -r $result /var/www/html 2>/dev/null
+
 }
 
 main(){
-    Banner
-    Basic_Info
-    Invade_Identify
-    Log_Analysis
-    webshell
-    BackDoor_Identify
-    Evil_Process
+    # Banner
+    # Basic_Info
+    # Invade_Identify
+    # Log_Analysis
+    webshell_php
+    # BackDoor_Identify
+    # Evil_Process
 }
 
 main
